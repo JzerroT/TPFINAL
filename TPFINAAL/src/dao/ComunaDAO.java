@@ -33,10 +33,13 @@ public class ComunaDAO {
 	public int eliminarPorParametro(Comuna comuna) {
 		int fila = 0;
 		Connection c = null;
-		String sql = "DELETE FROM comuna WHERE numeroComuna = ?";
 		try {
 			c = Conexion.conectar();
-			PreparedStatement stmt = c.prepareStatement(sql);
+			PreparedStatement borrarBarrios = c.prepareStatement("DELETE FROM barrios WHERE numeroComuna = ?");
+			borrarBarrios.setInt(1, comuna.getNumeroComuna());
+			borrarBarrios.executeUpdate();
+
+			PreparedStatement stmt = c.prepareStatement("DELETE FROM comuna WHERE numeroComuna = ?");
 			stmt.setInt(1, comuna.getNumeroComuna());
 			fila = stmt.executeUpdate();
 		} catch (SQLException e) {

@@ -131,15 +131,7 @@ public class PanelListadoComunas extends JPanel {
 		if (c == null) {
 			return;
 		}
-		int respuesta = JOptionPane.showConfirmDialog(this, "¿Eliminar la comuna " + c.getNumeroComuna() + "?",
-				"Eliminar", JOptionPane.YES_NO_OPTION);
-		if (respuesta != JOptionPane.YES_OPTION) {
-			return;
-		}
-		if (dao.eliminarPorParametro(c) == 0) {
-			JOptionPane.showMessageDialog(this, "No se pudo eliminar la comuna. Si tiene barrios, "
-					+ "primero hay que borrarlos o pasarlos a otra comuna.");
-		}
+		dao.eliminarPorParametro(c);
 		llenarTabla();
 	}
 }

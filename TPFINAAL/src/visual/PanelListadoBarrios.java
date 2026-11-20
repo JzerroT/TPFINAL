@@ -131,14 +131,7 @@ public class PanelListadoBarrios extends JPanel {
 		if (b == null) {
 			return;
 		}
-		int respuesta = JOptionPane.showConfirmDialog(this, "¿Eliminar el barrio " + b.getNombre()
-				+ "? Las personas que viven ahí van a quedar sin barrio.", "Eliminar", JOptionPane.YES_NO_OPTION);
-		if (respuesta != JOptionPane.YES_OPTION) {
-			return;
-		}
-		if (dao.eliminarBarrioPorParametro(b) == 0) {
-			JOptionPane.showMessageDialog(this, "No se pudo eliminar el barrio.");
-		}
+		dao.eliminarBarrioPorParametro(b);
 		llenarTabla();
 	}
 }
