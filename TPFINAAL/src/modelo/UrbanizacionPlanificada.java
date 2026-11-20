@@ -20,6 +20,11 @@ public final class UrbanizacionPlanificada extends Barrio{
 	    }
 
 	    @Override
+	    public String getTipo() {
+	        return "Urbanizacion Planificada";
+	    }
+
+	    @Override
 	    public boolean tieneCriticidadHabitacional() {
 	        return !conexionFormalAgua;
 	    }

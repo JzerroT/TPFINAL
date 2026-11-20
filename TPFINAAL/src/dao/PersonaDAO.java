@@ -1,124 +1,135 @@
 package dao;
 
 import java.sql.Connection;
-import modelo.Persona;
-import modelo.Barrio;
-import java.sql.DriverManager;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.ArrayList;
 
-public class ConexionPersona {
-	String user = "root";
-	String psw = "admin";
-	String path = "jdbc:mysql://localhost:3306/gestion_barrios";
+import enums.SituacionLaboral;
+import modelo.Barrio;
+import modelo.Persona;
 
-	public Connection conectar() {
+public class PersonaDAO {
+	public void agregarPersona(Persona p) {
 		Connection c = null;
+		String sql = "INSERT INTO persona(dni, nombre, apellido, fechaNacimiento, situacionLaboral, nombreBarrio) "
+				+ "VALUES (?, ?, ?, ?, ?, ?)";
 		try {
-			c = DriverManager.getConnection(path, user, psw);
-			System.out.println("Se conectó");
+			c = Conexion.conectar();
+			PreparedStatement stmt = c.prepareStatement(sql);
+			stmt.setString(1, p.getDni());
+			stmt.setString(2, p.getNombre());
+			stmt.setString(3, p.getApellido());
+			stmt.setDate(4, Date.valueOf(p.getFechaNacimiento()));
+			stmt.setString(5, p.getSituacionLaboral().name());
+			if (p.getBarrio() != null) {
+				stmt.setString(6, p.getBarrio().getNombre());
+			} else {
+				stmt.setNull(6, Types.VARCHAR);
+			}
+			stmt.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
-
+		} finally {
+			Conexion.cerrar(c);
 		}
-		return c;
 	}
-	
-	//modificar en clases(los nombres de los datos)
-	 public void cargarResidentes(Barrio barrio) {
-	        Connection conexion = null;
-	        try {
-	            conexion = Conexion.conectar();
-	            PreparedStatement ps = conexion.prepareStatement(
-	                    "SELECT dni, nombre_completo, fecha_nacimiento, situacion_laboral "
-	                    + "FROM persona WHERE nombre_barrio = ?");
-	            ps.setString(1, barrio.getNombre());
-	            ResultSet rs = ps.executeQuery();
-	            while (rs.next()) {
-	                Persona persona = new Persona(rs.getString("dni"), rs.getString("nombre_completo"),
-	                        rs.getDate("fecha_nacimiento").toLocalDate(),
-	                        SituacionLaboral.valueOf(rs.getString("situacion_laboral")));
-	                persona.setBarrio(barrio);
-	            }
-	        } catch (SQLException e) {
-	            e.printStackTrace();
-	        } finally {
-	            Conexion.cerrar(conexion);
-	        }
-	    }
-	 
-	 //modificar tambien
-	 public int actualizar(Persona p) {
-			Connection conexion = null;
-			conexion = conectar();
-			//sql = "UPDATE `bd_53`.`persona` SET `id`= 69 WHERE `id` = '"+p.getId()+"';";
-			sql = "UPDATE `bd_53`.`persona` SET `nombre`= 'jk' WHERE `id` = '"+p.getIdPersona()+"';";
-			//sql = "UPDATE `bd_53`.`persona` SET `apellido`= 'Torres' WHERE `id` = '"+p.getId()+"';";
-			try {
-				Statement stmt = conexion.createStatement();
-				int fila = stmt.executeUpdate(sql);
-				System.out.println(fila);
-			}catch(SQLException e){
-				e.printStackTrace();
-			}finally {
-				try {
-					conexion.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
+
+	public void eliminarPersona(Persona p) {
+		Connection c = null;
+		String sql = "DELETE FROM persona WHERE dni = ?";
+		try {
+			c = Conexion.conectar();
+			PreparedStatement stmt = c.prepareStatement(sql);
+			stmt.setString(1, p.getDni());
+			int filas = stmt.executeUpdate();
+			if (filas > 0) {
+				System.out.println("Se borró la persona");
+			} else {
+				System.out.println("No se encontró la persona");
 			}
-			return fila;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			Conexion.cerrar(c);
 		}
-	 
-	 //modificar
-	 public int eliminar(Persona p) {
-			sql = "DELETE FROM `persona` WHERE id = '(?)';";		
-			Connection conexion = null;
-			conexion = conectar();
-			try {
-				PreparedStatement stmt = conexion.prepareStatement(sql);
-				stmt.setFloat(1, p.getIdPersona());
-				//int fila = stmt.executeUpdate();
-				//System.out.println(fila);
-			}catch(SQLException e){
-				e.printStackTrace();
-			}finally {
-				try {
-					conexion.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
+	}
+
+	public void actualizarPersona(Persona p) {
+		Connection c = null;
+		String sql = "UPDATE persona SET nombre = ?, apellido = ?, fechaNacimiento = ?, situacionLaboral = ?, "
+				+ "nombreBarrio = ? WHERE dni = ?";
+		try {
+			c = Conexion.conectar();
+			PreparedStatement stmt = c.prepareStatement(sql);
+			stmt.setString(1, p.getNombre());
+			stmt.setString(2, p.getApellido());
+			stmt.setDate(3, Date.valueOf(p.getFechaNacimiento()));
+			stmt.setString(4, p.getSituacionLaboral().name());
+			if (p.getBarrio() != null) {
+				stmt.setString(5, p.getBarrio().getNombre());
+			} else {
+				stmt.setNull(5, Types.VARCHAR);
 			}
-			return fila;
-		}
-	 
-	//modificar los datos
-	 
-	 public int agregarPersonaPorParametro(Persona p) {
-			Connection conexion = null;
-			conexion = conectar();
-			sql = "INSERT INTO `tpfinalpoo`.`personas`(`idpersona`,`nombre`,`nacimiento`,`hijoas`,`idestudio`,`dni`)VALUES(?,?,?,?,?,?);";
-			try {
-				Date sqlDate = Date.valueOf(p.getNacimiento());
-				PreparedStatement stmt = conexion.prepareStatement(sql);
-				stmt.setString(2, p.getNombre());
-				stmt.setDate(3, sqlDate);
-				stmt.setFloat(1, p.getIdPersona());
-				stmt.setBoolean(4, p.getTieneHijos());
-				stmt.setInt(5, p.getIdPersona());
-				stmt.setInt(6, p.getDni());
-				fila = stmt.executeUpdate(); //Se tiene que ejecutar sin parametro(sql) porque ya se ejecuto el insert anteriormente 
-				System.out.println(fila);
-			}catch(SQLException e){
-				e.printStackTrace();
-			}finally {
-				try {
-					conexion.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
+			stmt.setString(6, p.getDni());
+			int filas = stmt.executeUpdate();
+			if (filas > 0) {
+				System.out.println("Se modificó la persona");
+			} else {
+				System.out.println("No se encontró la persona");
 			}
-			return fila;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			Conexion.cerrar(c);
 		}
-	 
-	 
+	}
+
+	public ArrayList<Persona> consultarPersonas() {
+		ArrayList<Barrio> barrios = new BarrioDAO().consultarBarrioSinPersonas();
+		return cargarPersonas(barrios);
+	}
+
+	public ArrayList<Persona> buscarPorNombre(String texto) {
+		ArrayList<Persona> resultado = new ArrayList<>();
+		for (Persona p : consultarPersonas()) {
+			if (p.coincideCon(texto)) {
+				resultado.add(p);
+			}
+		}
+		return resultado;
+	}
+
+	public ArrayList<Persona> cargarPersonas(ArrayList<Barrio> barrios) {
+		Connection c = null;
+		String sql = "SELECT * FROM persona ORDER BY apellido, nombre";
+		ArrayList<Persona> solucion = new ArrayList<>();
+		try {
+			c = Conexion.conectar();
+			Statement stmt = c.createStatement();
+			ResultSet rs = stmt.executeQuery(sql);
+			while (rs.next()) {
+				String nombreBarrio = rs.getString("nombreBarrio");
+				Barrio barrio = null;
+				for (Barrio b : barrios) {
+					if (b.getNombre().equalsIgnoreCase(nombreBarrio)) {
+						barrio = b;
+					}
+				}
+				Persona p = new Persona(rs.getString("dni"), rs.getString("nombre"), rs.getString("apellido"),
+						rs.getDate("fechaNacimiento").toLocalDate(),
+						SituacionLaboral.valueOf(rs.getString("situacionLaboral")), barrio);
+				solucion.add(p);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			Conexion.cerrar(c);
+		}
+		return solucion;
+	}
 }

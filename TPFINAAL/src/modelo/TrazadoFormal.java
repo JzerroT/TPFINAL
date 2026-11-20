@@ -16,8 +16,13 @@ public final class TrazadoFormal extends Barrio {
 	        if (cantidadEdificiosPH <= 0) {
 	            return 0;
 	        }
-	       
+
 	        return (double) cantidadPersonas / cantidadEdificiosPH;
+	    }
+
+	    @Override
+	    public String getTipo() {
+	        return "Trazado formal";
 	    }
 
 	    @Override

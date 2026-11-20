@@ -5,43 +5,50 @@ import java.util.ArrayList;
 public class Comuna {
 	private int numeroComuna;
 	private String sedeComunal;
-	private int cantidadBarrios;
-	
-	ArrayList <Barrio>barrios=new ArrayList<>();
-	
-	public Comuna (int numeroComuna, String sedeComunal, int cantidadBarrios ) 
-	{
-		this.numeroComuna = numeroComuna ;
+	private String juntaComunal;
+
+	ArrayList<Barrio> barrios = new ArrayList<>();
+
+	public Comuna(int numeroComuna, String sedeComunal, String juntaComunal) {
+		this.numeroComuna = numeroComuna;
 		this.sedeComunal = sedeComunal;
-		this.cantidadBarrios = cantidadBarrios ;
-		
+		this.juntaComunal = juntaComunal;
 	}
-	
-	public void agregarBarrios(Barrio b) 
-	{
+
+	public void agregarBarrios(Barrio b) {
 		barrios.add(b);
+		b.setComuna(this);
 	}
-	public int cantidadDeBarrios() 
-	{
-	return barrios.size();	
+
+	public int cantidadDeBarrios() {
+		return barrios.size();
 	}
-	
-	public boolean esAtencionPrioritaria() 
-	{
+
+	public int cantidadDeBarriosCriticos() {
 		int barriosCriticos = 0;
-		double porcentaje = 0;
-		for(Barrio b : barrios) {
-			if(b.tieneCriticidadHabitacional()) {
+		for (Barrio b : barrios) {
+			if (b.tieneCriticidadHabitacional()) {
 				barriosCriticos++;
-				 porcentaje =  barriosCriticos / barrios.size() * 100;
-
 			}
+		}
+		return barriosCriticos;
+	}
 
+	public boolean esAtencionPrioritaria() {
+		if (barrios.size() == 0) {
+			return false;
 		}
-		if(porcentaje >= 50) {
+		double porcentaje = cantidadDeBarriosCriticos() * 100.0 / barrios.size();
+		if (porcentaje >= 50) {
 			return true;
-		}else return false;
+		} else {
+			return false;
 		}
+	}
+
+	public ArrayList<Barrio> getBarrios() {
+		return barrios;
+	}
 
 	public int getNumeroComuna() {
 		return numeroComuna;
@@ -59,11 +66,11 @@ public class Comuna {
 		this.sedeComunal = sedeComunal;
 	}
 
-	public int getCantidadBarrios() {
-		return cantidadBarrios;
+	public String getJuntaComunal() {
+		return juntaComunal;
 	}
 
-	public void setCantidadBarrios(int cantidadBarrios) {
-		this.cantidadBarrios = cantidadBarrios;
+	public void setJuntaComunal(String juntaComunal) {
+		this.juntaComunal = juntaComunal;
 	}
 }

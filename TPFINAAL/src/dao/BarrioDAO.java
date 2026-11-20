@@ -1,122 +1,71 @@
 package dao;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 
 import modelo.Barrio;
+import modelo.ComplejoHabitacional;
 import modelo.Comuna;
 import modelo.TrazadoFormal;
 import modelo.UrbanizacionPlanificada;
-import modelo.ComplejoHabitacional;
-public class conexion1 {
-	String user = "root";
-	String psw = "admin ";
-	String path = "jdbc:mysql://localhost:3306/gestion_barrios";
 
-	public Connection conectar() {
+public class BarrioDAO {
+	public int agregarBarrio(Barrio barrio) {
+		int fila = 0;
 		Connection c = null;
+		String sql = "INSERT INTO barrios(nombreBarrio, hectareas, tipoBarrio, numeroComuna, cantidadPH, "
+				+ "porcentajeAsfalto, numeroLey, aguaFormal, monoblocks, consorcioActivo) "
+				+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		try {
-			c = DriverManager.getConnection(path, user, psw);
-			System.out.println("Se conectó");
-		} catch (SQLException e) {
-			e.printStackTrace();
-
-		}
-		return c;
-	}
-	public void agregarBarrio(Barrio barrio) {
-
-		Connection c = null;
-		   String sql = "INSERT INTO barrios(nombreBarrio, hectareas, tipoBarrio, cantidadPH, porcentajeAsfalto, numeroLey, aguaFormal, monoblocks, consorcioActivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-		try {
-			c = conectar();
+			c = Conexion.conectar();
 			PreparedStatement stmt = c.prepareStatement(sql);
-               stmt.setString(1, barrio.getNombre());
-		       stmt.setDouble(2, barrio.getSuperficieHectareas());
-		       stmt.executeUpdate();
-		        if (barrio instanceof TrazadoFormal) {
-
-		       TrazadoFormal tf = (TrazadoFormal) barrio;
-		       stmt.setInt(3, tf.getCantidadEdificiosPH());
-		       stmt.setDouble(4, tf.getPorcentajeAsfalto());
-		       stmt.setNull(5, java.sql.Types.DOUBLE);
-		       stmt.setNull(6, java.sql.Types.BOOLEAN);
-		       stmt.setNull(7, java.sql.Types.INTEGER);
-		       stmt.setNull(8, java.sql.Types.BOOLEAN);
-
-		        } else if (barrio instanceof UrbanizacionPlanificada) {
-
-		        UrbanizacionPlanificada up = (UrbanizacionPlanificada) barrio;
-		        stmt.setNull(3,  java.sql.Types.INTEGER);
-		        stmt.setNull(4,  java.sql.Types.DOUBLE);
-                stmt.setInt(5, up.getNumeroLeyIntegracion());
-		        stmt.setBoolean(6, up.isConexionFormalAgua());
-		        stmt.setNull(7,  java.sql.Types.INTEGER);
-		        stmt.setNull(8,  java.sql.Types.BOOLEAN);
-		        
-		            
-                } else if (barrio instanceof ComplejoHabitacional) {
-		        ComplejoHabitacional ch = (ComplejoHabitacional) barrio;
-		        stmt.setNull(3,  java.sql.Types.INTEGER);
-		        stmt.setNull(4,  java.sql.Types.DOUBLE);
-		        stmt.setNull(5,  java.sql.Types.DOUBLE);
-		        stmt.setNull(6,  java.sql.Types.INTEGER);
- 		        stmt.setInt(7, ch.getCantidadMonoblocks());
-		        stmt.setBoolean(8, ch.isConsorcioActivo());
-
-		        }			
+			stmt.setString(1, barrio.getNombre());
+			stmt.setDouble(2, barrio.getSuperficieHectareas());
+			cargarDatosDelTipo(stmt, barrio, 3);
+			fila = stmt.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
-
 		} finally {
-			try {
-				c.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-
+			Conexion.cerrar(c);
 		}
+		return fila;
 	}
-	
-	
-	public void eliminarBarrioPorParametro (Barrio barrio) {
+
+	public int eliminarBarrioPorParametro(Barrio barrio) {
+		int fila = 0;
 		Connection c = null;
-		String SQL = "DELETE from barrios WHERE nombreBarrio = ?";
+		String sql = "DELETE FROM barrios WHERE nombreBarrio = ?";
 		try {
-			c = conectar();
-			PreparedStatement stmt = c.prepareStatement(SQL);
-			 stmt.setString(1, barrio.getNombre());
-			 int filas = stmt.executeUpdate();
-              if (filas > 0) {
-		            System.out.println("shau registro");
-		        } else {
-		            System.out.println("No se encontrocomuna");
-		        }
-
+			c = Conexion.conectar();
+			PreparedStatement stmt = c.prepareStatement(sql);
+			stmt.setString(1, barrio.getNombre());
+			fila = stmt.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
-
 		} finally {
-			try {
-				c.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-
+			Conexion.cerrar(c);
 		}
+		return fila;
 	}
-	
+
 	public ArrayList<Barrio> consultarBarrio() {
+		ArrayList<Barrio> barrios = consultarBarrioSinPersonas();
+		new PersonaDAO().cargarPersonas(barrios);
+		return barrios;
+	}
+
+	public ArrayList<Barrio> consultarBarrioSinPersonas() {
 		Connection c = null;
-		String sql = "SELECT * from barrios";
+		String sql = "SELECT b.*, c.sedeComunal, c.juntaComunal FROM barrios b "
+				+ "JOIN comuna c ON c.numeroComuna = b.numeroComuna ORDER BY b.nombreBarrio";
 		ArrayList<Barrio> solucion = new ArrayList<>();
 		try {
-			c = conectar();
+			c = Conexion.conectar();
 			Statement stmt = c.createStatement();
 			ResultSet rs = stmt.executeQuery(sql);
 			while (rs.next()) {
@@ -126,60 +75,74 @@ public class conexion1 {
 				Barrio b = null;
 
 				if (tipoBarrio.equals("Trazado formal")) {
-				    b = new TrazadoFormal(tipoBarrio, hectareas, 0, hectareas);
+					b = new TrazadoFormal(nombreBarrio, hectareas, rs.getInt("cantidadPH"),
+							rs.getDouble("porcentajeAsfalto"));
+				} else if (tipoBarrio.equals("Urbanizacion Planificada")) {
+					b = new UrbanizacionPlanificada(nombreBarrio, hectareas, rs.getInt("numeroLey"),
+							rs.getBoolean("aguaFormal"));
+				} else if (tipoBarrio.equals("Complejo Habitacional")) {
+					b = new ComplejoHabitacional(nombreBarrio, hectareas, rs.getInt("monoblocks"),
+							rs.getBoolean("consorcioActivo"));
 				}
 
-				if (tipoBarrio.equals("Urbanizacion Planificada")) {
-				   b = new UrbanizacionPlanificada(tipoBarrio, hectareas, 0, false);
+				if (b != null) {
+					b.setComuna(new Comuna(rs.getInt("numeroComuna"), rs.getString("sedeComunal"),
+							rs.getString("juntaComunal")));
+					solucion.add(b);
 				}
-
-				if (tipoBarrio.equals("Complejo Habitacional")) {
-				   b = new ComplejoHabitacional(tipoBarrio, hectareas, 0, false);
-				}
-				solucion.add(b);
-				}
-			
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
-			try {
-				c.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+			Conexion.cerrar(c);
 		}
 		return solucion;
 	}
-	
-	
-	public void actualizarBarrioPorParametro(Barrio barrioAntes, Barrio BarrioNuevo) {
 
-	    String sql = "UPDATE barrios SET hectareas = ? WHERE nombreBarrio = ?";
-	    Connection c = null;
-	    try {
-            c = conectar();
-            PreparedStatement stnt = c.prepareStatement(sql);
-            stnt.setDouble(1, BarrioNuevo.getSuperficieHectareas());
-            stnt.setString(2, barrioAntes.getNombre());
-            int filas = stnt.executeUpdate();
-            if (filas > 0) {
-	            System.out.println("c modifico exito");
-	        } else {
-	            System.out.println("No se encontró la comuna");
-	        }
-
-	    } catch (SQLException e) {
-	        e.printStackTrace();
-	    }finally {
-	        try {
-	            if (c != null) {
-	                c.close();
-	            }
-	        } catch (SQLException e) {
-	            e.printStackTrace();
-	        }
-	    }
-	    
+	public int actualizarBarrioPorParametro(Barrio barrioAntes, Barrio barrioNuevo) {
+		int fila = 0;
+		String sql = "UPDATE barrios SET hectareas = ?, tipoBarrio = ?, numeroComuna = ?, cantidadPH = ?, "
+				+ "porcentajeAsfalto = ?, numeroLey = ?, aguaFormal = ?, monoblocks = ?, consorcioActivo = ? "
+				+ "WHERE nombreBarrio = ?";
+		Connection c = null;
+		try {
+			c = Conexion.conectar();
+			PreparedStatement stmt = c.prepareStatement(sql);
+			stmt.setDouble(1, barrioNuevo.getSuperficieHectareas());
+			cargarDatosDelTipo(stmt, barrioNuevo, 2);
+			stmt.setString(10, barrioAntes.getNombre());
+			fila = stmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			Conexion.cerrar(c);
+		}
+		return fila;
 	}
-	
+
+	private void cargarDatosDelTipo(PreparedStatement stmt, Barrio barrio, int desde) throws SQLException {
+		stmt.setString(desde, barrio.getTipo());
+		stmt.setInt(desde + 1, barrio.getComuna().getNumeroComuna());
+
+		stmt.setNull(desde + 2, Types.INTEGER);
+		stmt.setNull(desde + 3, Types.DOUBLE);
+		stmt.setNull(desde + 4, Types.INTEGER);
+		stmt.setNull(desde + 5, Types.BOOLEAN);
+		stmt.setNull(desde + 6, Types.INTEGER);
+		stmt.setNull(desde + 7, Types.BOOLEAN);
+
+		if (barrio instanceof TrazadoFormal) {
+			TrazadoFormal tf = (TrazadoFormal) barrio;
+			stmt.setInt(desde + 2, tf.getCantidadEdificiosPH());
+			stmt.setDouble(desde + 3, tf.getPorcentajeAsfalto());
+		} else if (barrio instanceof UrbanizacionPlanificada) {
+			UrbanizacionPlanificada up = (UrbanizacionPlanificada) barrio;
+			stmt.setInt(desde + 4, up.getNumeroLeyIntegracion());
+			stmt.setBoolean(desde + 5, up.isConexionFormalAgua());
+		} else if (barrio instanceof ComplejoHabitacional) {
+			ComplejoHabitacional ch = (ComplejoHabitacional) barrio;
+			stmt.setInt(desde + 6, ch.getCantidadMonoblocks());
+			stmt.setBoolean(desde + 7, ch.isConsorcioActivo());
+		}
+	}
 }

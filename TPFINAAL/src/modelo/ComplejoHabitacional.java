@@ -20,6 +20,11 @@ public final class ComplejoHabitacional extends Barrio {
 	    }
 
 	    @Override
+	    public String getTipo() {
+	        return "Complejo Habitacional";
+	    }
+
+	    @Override
 	    public boolean tieneCriticidadHabitacional() {
 	        return !consorcioActivo;
 	    }

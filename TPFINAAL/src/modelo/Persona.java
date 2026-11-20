@@ -5,61 +5,82 @@ import java.time.LocalDate;
 import enums.SituacionLaboral;
 
 public class Persona {
-	 private String dni;
-	    private String nombre;
-	    private String apellido;
-	    private LocalDate fechaNacimiento;
-	    private SituacionLaboral situacionLaboral;
-	    private Barrio barrio;
+	private String dni;
+	private String nombre;
+	private String apellido;
+	private LocalDate fechaNacimiento;
+	private SituacionLaboral situacionLaboral;
+	private Barrio barrio;
 
-	    public Persona(String dni, String nombre,String apellido, LocalDate fechaNacimiento,
-	                   SituacionLaboral situacionLaboral, Barrio barrio) {
-	        this.dni = dni;
-	        this.nombre = nombre;
-	        this.fechaNacimiento = fechaNacimiento;
-	        this.situacionLaboral = situacionLaboral;
-	        this.barrio = barrio;
-	        this.apellido = apellido;
-	    }
-	    
-	    public void asociarBarrio(Barrio barrio) {
-	        this.barrio = barrio;
-	    }
+	public Persona(String dni, String nombre, String apellido, LocalDate fechaNacimiento,
+			SituacionLaboral situacionLaboral, Barrio barrio) {
+		this.dni = dni;
+		this.nombre = nombre;
+		this.apellido = apellido;
+		this.fechaNacimiento = fechaNacimiento;
+		this.situacionLaboral = situacionLaboral;
+		asociarBarrio(barrio);
+	}
 
-	    public String getDni() {
-	        return dni;
-	    }
+	public void asociarBarrio(Barrio nuevo) {
+		if (this.barrio != null) {
+			this.barrio.quitarPersona(this);
+		}
+		this.barrio = nuevo;
+		if (nuevo != null) {
+			nuevo.agregarPersona(this);
+		}
+	}
 
-	    public void setDni(String dni) {
-	        this.dni = dni;
-	    }
+	public boolean coincideCon(String texto) {
+		return getNombreCompleto().toLowerCase().contains(texto.toLowerCase().trim());
+	}
 
-	    public String getNombreCompleto() {
-	        return nombre;
-	    }
+	public String getDni() {
+		return dni;
+	}
 
-	    public void setNombreCompleto(String nombreCompleto) {
-	        this.nombre = nombreCompleto;
-	    }
+	public void setDni(String dni) {
+		this.dni = dni;
+	}
 
-	    public LocalDate getFechaNacimiento() {
-	        return fechaNacimiento;
-	    }
+	public String getNombre() {
+		return nombre;
+	}
 
-	    public void setFechaNacimiento(LocalDate fechaNacimiento) {
-	        this.fechaNacimiento = fechaNacimiento;
-	    }
+	public void setNombre(String nombre) {
+		this.nombre = nombre;
+	}
 
-	    public SituacionLaboral getSituacionLaboral() {
-	        return situacionLaboral;
-	    }
+	public String getApellido() {
+		return apellido;
+	}
 
-	    public void setSituacionLaboral(SituacionLaboral situacionLaboral) {
-	        this.situacionLaboral = situacionLaboral;
-	    }
+	public void setApellido(String apellido) {
+		this.apellido = apellido;
+	}
 
-	    public Barrio getBarrio() {
-	        return barrio;
-	    }
+	public String getNombreCompleto() {
+		return nombre + " " + apellido;
+	}
 
+	public LocalDate getFechaNacimiento() {
+		return fechaNacimiento;
+	}
+
+	public void setFechaNacimiento(LocalDate fechaNacimiento) {
+		this.fechaNacimiento = fechaNacimiento;
+	}
+
+	public SituacionLaboral getSituacionLaboral() {
+		return situacionLaboral;
+	}
+
+	public void setSituacionLaboral(SituacionLaboral situacionLaboral) {
+		this.situacionLaboral = situacionLaboral;
+	}
+
+	public Barrio getBarrio() {
+		return barrio;
+	}
 }
